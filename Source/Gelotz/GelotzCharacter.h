@@ -91,6 +91,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 		float playerHealth;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		float maxDistanceApart;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
 		bool wasLightAttackUsed;
 

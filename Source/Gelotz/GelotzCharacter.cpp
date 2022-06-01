@@ -48,7 +48,10 @@ AGelotzCharacter::AGelotzCharacter()
 	directionalInput = EDirectionalInput::VE_Default;
 	transform = FTransform();
 	scale = FVector(0.0f, 0.0f, 0.0f);
+
 	playerHealth = 1.00f;
+	maxDistanceApart = 1000.0f;
+
 	wasLightAttackUsed = false;
 	wasMediumAttackUsed = false;
 	wasHeavyAttackUsed = false;
@@ -129,8 +132,23 @@ void AGelotzCharacter::MoveRight(float Value)
 		directionalInput = EDirectionalInput::VE_Default;
 	}
 
-	// add movement in that direction
-	AddMovementInput(FVector(0.f,-1.f,0.f), Value);
+	float currentDistanceApart = abs(otherPlayer->GetActorLocation().Y - GetActorLocation().Y);
+
+	if (currentDistanceApart >= maxDistanceApart)
+	{
+		if ((currentDistanceApart + Value < currentDistanceApart && !isFlipped) || (currentDistanceApart - Value < currentDistanceApart && isFlipped))
+		{
+			// add movement in that direction
+			AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
+		}
+	}
+	else
+	{
+		// add movement in that direction
+		AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
+	}
+
+	
 }
 
 void AGelotzCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
