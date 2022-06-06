@@ -67,6 +67,7 @@ AGelotzCharacter::AGelotzCharacter()
 //////////////////////////////////////////////////////////////////////////
 // Input
 
+//Bind Input Karakter
 void AGelotzCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	if (auto gameMode = Cast<AGelotzGameMode>(GetWorld()->GetAuthGameMode()))
@@ -75,8 +76,10 @@ void AGelotzCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Player 1 Has Bound Their Controls . "));
 			// set up gameplay key bindings
-			PlayerInputComponent->BindAction("JumpP1", IE_Pressed, this, &ACharacter::Jump);
-			PlayerInputComponent->BindAction("JumpP1", IE_Released, this, &ACharacter::StopJumping);
+			PlayerInputComponent->BindAction("JumpP1", IE_Pressed, this, &AGelotzCharacter::Jump);
+			PlayerInputComponent->BindAction("JumpP1", IE_Released, this, &AGelotzCharacter::StopJumping);
+			PlayerInputComponent->BindAction("CrouchP1", IE_Pressed, this, &AGelotzCharacter::StartCrouching);
+			PlayerInputComponent->BindAction("CrouchP1", IE_Released, this, &AGelotzCharacter::StopCrouching);
 			PlayerInputComponent->BindAxis("MoveRightP1", this, &AGelotzCharacter::MoveRight);
 
 			PlayerInputComponent->BindAction("Attack1P1", IE_Pressed, this, &AGelotzCharacter::StartAttack1);
@@ -95,8 +98,10 @@ void AGelotzCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Player 2 Has Bound Their Controls "));
 			// set up gameplay key bindings
-			PlayerInputComponent->BindAction("JumpP2", IE_Pressed, this, &ACharacter::Jump);
-			PlayerInputComponent->BindAction("JumpP2", IE_Released, this, &ACharacter::StopJumping);
+			PlayerInputComponent->BindAction("JumpP2", IE_Pressed, this, &AGelotzCharacter::Jump);
+			PlayerInputComponent->BindAction("JumpP2", IE_Released, this, &AGelotzCharacter::StopJumping);
+			PlayerInputComponent->BindAction("CrouchP2", IE_Pressed, this, &AGelotzCharacter::StartCrouching);
+			PlayerInputComponent->BindAction("CrouchP2", IE_Released, this, &AGelotzCharacter::StopCrouching);
 			PlayerInputComponent->BindAxis("MoveRightP2", this, &AGelotzCharacter::MoveRight);
 
 			PlayerInputComponent->BindAction("Attack1P2", IE_Pressed, this, &AGelotzCharacter::StartAttack1);
@@ -115,38 +120,74 @@ void AGelotzCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	
 }
 
+// Fungsi Ketika Player Menekan Tombol
+
+void AGelotzCharacter::Jump()
+{
+	ACharacter::Jump(); // Ketika Pemain Menekan Tombol Melompat Maka Character Akan Melompat
+	directionalInput = EDirectionalInput::VE_Jumping;
+}
+
+void AGelotzCharacter::StopJumping()
+{
+	ACharacter::StopJumping(); // Ketika Pemain Melepas Tombol Melompat Maka Character Akan Turun
+}
+
+void AGelotzCharacter::Landed(const FHitResult& Hit)
+{
+	//ACharacter::Landed(Hit)
+	directionalInput = EDirectionalInput::VE_Default; //Ketikan Character Telah Menyentuh Permukaan Maka Character Akan Idle
+}
+
+void AGelotzCharacter::StartCrouching()
+{
+	isCrouching = true; // Ketika Pemain Menekan Tombol Jongkok Maka Character Akan Jongkok
+}
+
+void AGelotzCharacter::StopCrouching()
+{
+	isCrouching = false; // Ketika Pemain Tidak Menekan Tombol Jongkok Maka Character Akan Idle
+}
+
 void AGelotzCharacter::MoveRight(float Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("The directional input is: %f "), Value);
+	 
+	
 
-	if (Value > 0.20f)
-	{
-		directionalInput = EDirectionalInput::VE_MovingRight;
-	}
-	else if (Value < -0.20f)
-	{
-		directionalInput = EDirectionalInput::VE_MovingLeft;
-	}
-	else
-	{
-		directionalInput = EDirectionalInput::VE_Default;
-	}
+		UE_LOG(LogTemp, Warning, TEXT("The directional input is: %f "), Value);
 
-	float currentDistanceApart = abs(otherPlayer->GetActorLocation().Y - GetActorLocation().Y);
+		if (directionalInput != EDirectionalInput::VE_Jumping)
+		{
+			if (Value > 0.20f)
+			{
+				directionalInput = EDirectionalInput::VE_MovingRight;
+			}
+			else if (Value < -0.20f)
+			{
+				directionalInput = EDirectionalInput::VE_MovingLeft;
 
-	if (currentDistanceApart >= maxDistanceApart)
-	{
-		if ((currentDistanceApart + Value < currentDistanceApart && !isFlipped) || (currentDistanceApart - Value < currentDistanceApart && isFlipped))
+			}
+			else
+			{
+				directionalInput = EDirectionalInput::VE_Default;
+			}
+		}
+
+		float currentDistanceApart = abs(otherPlayer->GetActorLocation().Y - GetActorLocation().Y);
+
+		if (currentDistanceApart >= maxDistanceApart)
+		{
+			if ((currentDistanceApart + Value < currentDistanceApart && !isFlipped) || (currentDistanceApart - Value < currentDistanceApart && isFlipped))
+			{
+				// add movement in that direction
+				AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
+			}
+		}
+		else
 		{
 			// add movement in that direction
 			AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
 		}
-	}
-	else
-	{
-		// add movement in that direction
-		AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
-	}
 
 	
 }

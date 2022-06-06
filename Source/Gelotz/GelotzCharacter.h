@@ -7,12 +7,13 @@
 #include "GelotzCharacter.generated.h"
 
 UENUM(BlueprintType)
+// Inisialasasi Untuk Tombol Arah
 enum class EDirectionalInput : uint8
 {
 	VE_Default		UMETA(DisplayName = "NOT_MOVING"),
 	VE_MovingRight	UMETA(DisplayName = "MOVING_RIGHT"),
-	VE_MovingLeft	UMETA(DisplayName = "MOVING_LEFT")
-
+	VE_MovingLeft	UMETA(DisplayName = "MOVING_LEFT"),
+	VE_Jumping		UMETA(DisplayName =	"Jumping")
 };
 
 UCLASS(config=Game)
@@ -70,6 +71,19 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
+	// Fungsi Untuk Melompat
+	virtual void Jump() override;
+	virtual void StopJumping() override;
+	virtual void Landed(const FHitResult& Hit) override;
+
+	//Membuat Karakter Jongkok
+	UFUNCTION(BlueprintCallable)
+	void StartCrouching();
+
+	//Membuat Karakter Berhenti Jongkok
+	UFUNCTION(BlueprintCallable)
+	void StopCrouching();
+
 	UFUNCTION(BlueprintCallable)
 	void TakeDamage(float _damageAmount);
 
@@ -117,6 +131,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Controller")
 		bool isDeviceForMultiplayer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+		bool isCrouching;
 	// End of APawn interface
 
 
