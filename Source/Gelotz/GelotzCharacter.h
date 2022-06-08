@@ -8,12 +8,14 @@
 
 UENUM(BlueprintType)
 // Inisialasasi Untuk Tombol Arah
-enum class EDirectionalInput : uint8
+enum class ECharacterState : uint8
 {
 	VE_Default		UMETA(DisplayName = "NOT_MOVING"),
 	VE_MovingRight	UMETA(DisplayName = "MOVING_RIGHT"),
 	VE_MovingLeft	UMETA(DisplayName = "MOVING_LEFT"),
-	VE_Jumping		UMETA(DisplayName =	"Jumping")
+	VE_Jumping		UMETA(DisplayName =	"JUMPING"),
+	VE_Stunned		UMETA(DisplayName = "STUNNED"),
+	VE_Blocking		UMETA(DisplayName = "BLOCKING")
 };
 
 UCLASS(config=Game)
@@ -85,7 +87,13 @@ protected:
 	void StopCrouching();
 
 	UFUNCTION(BlueprintCallable)
-	void TakeDamage(float _damageAmount);
+	void TakeDamage(float _damageAmount, float _hitstunTime);
+
+	//Fungsi Karakter Masuk Ke Animasi Stun
+	void BeginStun();
+
+	//Fungsi Karakter Mengakhiri Animasi Stun
+	void EndStun();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player References")
 		AGelotzCharacter* otherPlayer;
@@ -94,7 +102,7 @@ protected:
 		AActor* hurtbox;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-		EDirectionalInput directionalInput;
+		ECharacterState characterState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Model")
 		FTransform transform;
@@ -102,11 +110,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Model")
 		FVector scale;
 
+	//Untuk Mengatur Durasi Stun
+	FTimerHandle stunTimerHandle;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 		float playerHealth;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 		float maxDistanceApart;
+
+	//Durasi Jika Karakter Terkena Stun
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+		float stunTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
 		bool wasLightAttackUsed;

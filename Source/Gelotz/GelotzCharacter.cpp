@@ -39,18 +39,19 @@ AGelotzCharacter::AGelotzCharacter()
 	GetCharacterMovement()->AirControl = 0.80f;
 	GetCharacterMovement()->JumpZVelocity = 1000.f;
 	GetCharacterMovement()->GroundFriction = 3.f;
-	GetCharacterMovement()->MaxWalkSpeed = 600.f;
+	GetCharacterMovement()->MaxWalkSpeed = 400.f;
 	GetCharacterMovement()->MaxFlySpeed = 600.f;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 
 	otherPlayer = nullptr;
 	hurtbox = nullptr;
-	directionalInput = EDirectionalInput::VE_Default;
+	characterState = ECharacterState::VE_Default;
 	transform = FTransform();
 	scale = FVector(0.0f, 0.0f, 0.0f);
 
 	playerHealth = 1.00f;
 	maxDistanceApart = 1000.0f;
+	stunTime = 0.0f;
 
 	wasLightAttackUsed = false;
 	wasMediumAttackUsed = false;
@@ -58,7 +59,7 @@ AGelotzCharacter::AGelotzCharacter()
 	wasSpecialAttackUsed = false;
 	isFlipped = false;
 	hasLandedHit = false;
-	canMove = false;
+	canMove = true;
 	
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -125,7 +126,7 @@ void AGelotzCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 void AGelotzCharacter::Jump()
 {
 	ACharacter::Jump(); // Ketika Pemain Menekan Tombol Melompat Maka Character Akan Melompat
-	directionalInput = EDirectionalInput::VE_Jumping;
+	characterState = ECharacterState::VE_Jumping;
 }
 
 void AGelotzCharacter::StopJumping()
@@ -136,7 +137,7 @@ void AGelotzCharacter::StopJumping()
 void AGelotzCharacter::Landed(const FHitResult& Hit)
 {
 	//ACharacter::Landed(Hit)
-	directionalInput = EDirectionalInput::VE_Default; //Ketikan Character Telah Menyentuh Permukaan Maka Character Akan Idle
+	characterState = ECharacterState::VE_Default; //Ketikan Character Telah Menyentuh Permukaan Maka Character Akan Idle
 }
 
 void AGelotzCharacter::StartCrouching()
@@ -151,25 +152,24 @@ void AGelotzCharacter::StopCrouching()
 
 void AGelotzCharacter::MoveRight(float Value)
 {
-	 
-	
-
+	if (canMove & !isCrouching)
+	{
 		UE_LOG(LogTemp, Warning, TEXT("The directional input is: %f "), Value);
 
-		if (directionalInput != EDirectionalInput::VE_Jumping)
+		if (characterState != ECharacterState::VE_Jumping)
 		{
 			if (Value > 0.20f)
 			{
-				directionalInput = EDirectionalInput::VE_MovingRight;
+				characterState = ECharacterState::VE_MovingRight;
 			}
 			else if (Value < -0.20f)
 			{
-				directionalInput = EDirectionalInput::VE_MovingLeft;
+				characterState = ECharacterState::VE_MovingLeft;
 
 			}
 			else
 			{
-				directionalInput = EDirectionalInput::VE_Default;
+				characterState = ECharacterState::VE_Default;
 			}
 		}
 
@@ -180,16 +180,16 @@ void AGelotzCharacter::MoveRight(float Value)
 			if ((currentDistanceApart + Value < currentDistanceApart && !isFlipped) || (currentDistanceApart - Value < currentDistanceApart && isFlipped))
 			{
 				// add movement in that direction
-				AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
+				AddMovementInput(FVector(0.f, 1.f, 0.f), Value);
 			}
 		}
 		else
 		{
 			// add movement in that direction
-			AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
+			AddMovementInput(FVector(0.f, 1.f, 0.f), Value);
 		}
 
-	
+	}
 }
 
 void AGelotzCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
@@ -262,10 +262,15 @@ void AGelotzCharacter::P2KeyboardMoveRight(float _value)
 	MoveRight(_value);
 }
 
-void AGelotzCharacter::TakeDamage(float _damageAmount)
+void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Menerima Damage Sebesar %f poin."), _damageAmount);
 	playerHealth -= _damageAmount;
+
+	characterState = ECharacterState::VE_Stunned;
+	stunTime = _hitstunTime;
+	BeginStun();
+
 	if (otherPlayer)
 	{
 		otherPlayer->hasLandedHit = true;
@@ -277,47 +282,60 @@ void AGelotzCharacter::TakeDamage(float _damageAmount)
 	}
 }
 
+void AGelotzCharacter::BeginStun()
+{
+	canMove = false;
+	GetWorld()->GetTimerManager().SetTimer(stunTimerHandle, this, &AGelotzCharacter::EndStun, stunTime, false);
+}
 
+void AGelotzCharacter::EndStun()
+{
+	characterState = ECharacterState::VE_Default;
+	canMove = true;
+}
 
 void AGelotzCharacter::Tick(float DeltaTime)
 {
 
 	Super::Tick(DeltaTime);
 
-	if (otherPlayer)
+	if (characterState != ECharacterState::VE_Jumping)
 	{
-		if (auto characterMovement = GetCharacterMovement())
+		if (otherPlayer)
 		{
-			if (auto enemyMovement = otherPlayer->GetCharacterMovement())
+			if (auto characterMovement = GetCharacterMovement())
 			{
-				if (enemyMovement->GetActorLocation().Y >= characterMovement->GetActorLocation().Y)
+				if (auto enemyMovement = otherPlayer->GetCharacterMovement())
 				{
-					if (isFlipped)
+					if (enemyMovement->GetActorLocation().Y >= characterMovement->GetActorLocation().Y)
 					{
-						if (auto mesh = GetCapsuleComponent()->GetChildComponent(1))
+						if (isFlipped)
 						{
-							transform = mesh->GetRelativeTransform();
-							scale = transform.GetScale3D();
-							scale.Y = 1;
-							transform.SetScale3D(scale);
-							mesh->SetRelativeTransform(transform);
+							if (auto mesh = GetCapsuleComponent()->GetChildComponent(1))
+							{
+								transform = mesh->GetRelativeTransform();
+								scale = transform.GetScale3D();
+								scale.Y = -1;
+								transform.SetScale3D(scale);
+								mesh->SetRelativeTransform(transform);
+							}
+							isFlipped = false;
 						}
-						isFlipped = false;
 					}
-				}
-				else
-				{
-					if (!isFlipped)
+					else
 					{
-						if (auto mesh = GetCapsuleComponent()->GetChildComponent(1))
+						if (!isFlipped)
 						{
-							transform = mesh->GetRelativeTransform();
-							scale = transform.GetScale3D();
-							scale.Y = -1;
-							transform.SetScale3D(scale);
-							mesh->SetRelativeTransform(transform);
+							if (auto mesh = GetCapsuleComponent()->GetChildComponent(1))
+							{
+								transform = mesh->GetRelativeTransform();
+								scale = transform.GetScale3D();
+								scale.Y = 1;
+								transform.SetScale3D(scale);
+								mesh->SetRelativeTransform(transform);
+							}
+							isFlipped = true;
 						}
-						isFlipped = true;
 					}
 				}
 			}
