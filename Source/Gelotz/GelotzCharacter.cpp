@@ -81,6 +81,8 @@ void AGelotzCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 			PlayerInputComponent->BindAction("JumpP1", IE_Released, this, &AGelotzCharacter::StopJumping);
 			PlayerInputComponent->BindAction("CrouchP1", IE_Pressed, this, &AGelotzCharacter::StartCrouching);
 			PlayerInputComponent->BindAction("CrouchP1", IE_Released, this, &AGelotzCharacter::StopCrouching);
+			PlayerInputComponent->BindAction("BlockP1", IE_Pressed, this, &AGelotzCharacter::StartBlocking);
+			PlayerInputComponent->BindAction("BlockP1", IE_Released, this, &AGelotzCharacter::StopBlocking);
 			PlayerInputComponent->BindAxis("MoveRightP1", this, &AGelotzCharacter::MoveRight);
 
 			PlayerInputComponent->BindAction("Attack1P1", IE_Pressed, this, &AGelotzCharacter::StartAttack1);
@@ -103,6 +105,8 @@ void AGelotzCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 			PlayerInputComponent->BindAction("JumpP2", IE_Released, this, &AGelotzCharacter::StopJumping);
 			PlayerInputComponent->BindAction("CrouchP2", IE_Pressed, this, &AGelotzCharacter::StartCrouching);
 			PlayerInputComponent->BindAction("CrouchP2", IE_Released, this, &AGelotzCharacter::StopCrouching);
+			PlayerInputComponent->BindAction("BlockP2", IE_Pressed, this, &AGelotzCharacter::StartBlocking);
+			PlayerInputComponent->BindAction("BlockP2", IE_Released, this, &AGelotzCharacter::StopBlocking);
 			PlayerInputComponent->BindAxis("MoveRightP2", this, &AGelotzCharacter::MoveRight);
 
 			PlayerInputComponent->BindAction("Attack1P2", IE_Pressed, this, &AGelotzCharacter::StartAttack1);
@@ -142,17 +146,27 @@ void AGelotzCharacter::Landed(const FHitResult& Hit)
 
 void AGelotzCharacter::StartCrouching()
 {
-	isCrouching = true; // Ketika Pemain Menekan Tombol Jongkok Maka Character Akan Jongkok
+	characterState = ECharacterState::VE_Crouching;
 }
 
 void AGelotzCharacter::StopCrouching()
 {
-	isCrouching = false; // Ketika Pemain Tidak Menekan Tombol Jongkok Maka Character Akan Idle
+	characterState = ECharacterState::VE_Default;
+}
+
+void AGelotzCharacter::StartBlocking()
+{
+	characterState = ECharacterState::VE_Blocking;
+}
+
+void AGelotzCharacter::StopBlocking()
+{
+	characterState = ECharacterState::VE_Default;
 }
 
 void AGelotzCharacter::MoveRight(float Value)
 {
-	if (canMove & !isCrouching)
+	if (canMove && characterState != ECharacterState::VE_Crouching && characterState != ECharacterState::VE_Blocking)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("The directional input is: %f "), Value);
 
@@ -264,22 +278,32 @@ void AGelotzCharacter::P2KeyboardMoveRight(float _value)
 
 void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Menerima Damage Sebesar %f poin."), _damageAmount);
-	playerHealth -= _damageAmount;
-
-	characterState = ECharacterState::VE_Stunned;
-	stunTime = _hitstunTime;
-	BeginStun();
-
-	if (otherPlayer)
+	if (characterState != ECharacterState::VE_Blocking)
 	{
-		otherPlayer->hasLandedHit = true;
+		UE_LOG(LogTemp, Warning, TEXT("Menerima Damage Sebesar %f poin."), _damageAmount);
+		playerHealth -= _damageAmount;
+
+		characterState = ECharacterState::VE_Stunned;
+		stunTime = _hitstunTime;
+		BeginStun();
+
+		if (otherPlayer)
+		{
+			otherPlayer->hasLandedHit = true;
+		}
+	}
+	else
+	{
+		float reducedDamage = _damageAmount * 0.5f;
+		UE_LOG(LogTemp, Warning, TEXT("Menerima Damage Yang Dikurangi Sebesar %f poin"), reducedDamage);
+		playerHealth -= reducedDamage;
 	}
 
 	if (playerHealth < 0.00f)
 	{
 		playerHealth = 0.00f;
 	}
+	
 }
 
 void AGelotzCharacter::BeginStun()

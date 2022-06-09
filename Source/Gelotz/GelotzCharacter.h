@@ -15,7 +15,8 @@ enum class ECharacterState : uint8
 	VE_MovingLeft	UMETA(DisplayName = "MOVING_LEFT"),
 	VE_Jumping		UMETA(DisplayName =	"JUMPING"),
 	VE_Stunned		UMETA(DisplayName = "STUNNED"),
-	VE_Blocking		UMETA(DisplayName = "BLOCKING")
+	VE_Blocking		UMETA(DisplayName = "BLOCKING"),
+	VE_Crouching	UMETA(DisplayName = "CROUCHING")
 };
 
 UCLASS(config=Game)
@@ -86,6 +87,14 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StopCrouching();
 
+	//Membuat Karakter Menangkis
+	UFUNCTION(BlueprintCallable)
+	void StartBlocking();
+
+	//Membuat Karakter Berhenti Menangkis
+	UFUNCTION(BlueprintCallable)
+	void StopBlocking();
+
 	UFUNCTION(BlueprintCallable)
 	void TakeDamage(float _damageAmount, float _hitstunTime);
 
@@ -147,8 +156,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Controller")
 		bool isDeviceForMultiplayer;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-		bool isCrouching;
+
 	// End of APawn interface
 
 
