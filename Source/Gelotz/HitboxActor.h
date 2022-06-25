@@ -37,10 +37,10 @@ public:
 	//inisialisasi HitStun Time
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 		float hitstunTime;
-
-	//inisialisasi blockstun time
+	//inisialisasi blockstun Time
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 		float blockstunTime;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 		EHitboxEnum hitboxType;

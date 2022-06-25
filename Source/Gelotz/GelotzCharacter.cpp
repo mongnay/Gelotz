@@ -52,11 +52,17 @@ AGelotzCharacter::AGelotzCharacter()
 	playerHealth = 1.00f;
 	maxDistanceApart = 1000.0f;
 	stunTime = 0.0f;
+	gravityScale = GetCharacterMovement()->GravityScale;
+	superMeterAmount = 0.0f;
 
 	wasLightAttackUsed = false;
 	wasMediumAttackUsed = false;
 	wasHeavyAttackUsed = false;
-	wasSpecialAttackUsed = false;
+	wasSuperUsed = false;
+	wasLightExAttackUsed = false;
+	wasMediumExAttackUsed = false;
+	wasHeavyExAttackUsed = false;
+
 	isFlipped = false;
 	hasLandedHit = false;
 	canMove = true;
@@ -94,6 +100,8 @@ void AGelotzCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 			PlayerInputComponent->BindAction("Attack4P1", IE_Pressed, this, &AGelotzCharacter::StartAttack4);
 			//PlayerInputComponent->BindAction("Attack1", IE_Released, this, &ACGelotzharacter::StopAttack1);
 
+			PlayerInputComponent->BindAction("ExceptionalAttackP1", IE_Pressed, this, &AGelotzCharacter::StartExceptionalAttack);
+
 			PlayerInputComponent->BindTouch(IE_Pressed, this, &AGelotzCharacter::TouchStarted);
 			PlayerInputComponent->BindTouch(IE_Released, this, &AGelotzCharacter::TouchStopped);
 		}
@@ -120,6 +128,8 @@ void AGelotzCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 
 			PlayerInputComponent->BindTouch(IE_Pressed, this, &AGelotzCharacter::TouchStarted);
 			PlayerInputComponent->BindTouch(IE_Released, this, &AGelotzCharacter::TouchStopped);
+
+			PlayerInputComponent->BindAction("ExceptionalAttackP2", IE_Pressed, this, &AGelotzCharacter::StartExceptionalAttack);
 		}
 	}
 	
@@ -141,6 +151,7 @@ void AGelotzCharacter::StopJumping()
 void AGelotzCharacter::Landed(const FHitResult& Hit)
 {
 	//ACharacter::Landed(Hit)
+	GetCharacterMovement()->GravityScale = gravityScale;
 	characterState = ECharacterState::VE_Default; //Ketikan Character Telah Menyentuh Permukaan Maka Character Akan Idle
 }
 
@@ -170,7 +181,7 @@ void AGelotzCharacter::MoveRight(float Value)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("The directional input is: %f "), Value);
 
-		if (characterState != ECharacterState::VE_Jumping)
+		if (characterState != ECharacterState::VE_Jumping && characterState != ECharacterState::VE_Launched)
 		{
 			if (Value > 0.20f)
 			{
@@ -238,7 +249,33 @@ void AGelotzCharacter::StartAttack3()
 void AGelotzCharacter::StartAttack4()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Menggunakan Attack 4"));
-	wasSpecialAttackUsed = true;
+	wasSuperUsed = true;
+}
+
+void AGelotzCharacter::StartExceptionalAttack()
+{
+	if (wasLightAttackUsed)
+	{
+		wasLightExAttackUsed = true;
+		superMeterAmount -= 0.20f;
+	}
+
+	else if (wasMediumAttackUsed)
+	{
+		wasMediumExAttackUsed = true;
+		superMeterAmount -= 0.35f;
+	}
+
+	else if (wasHeavyAttackUsed)
+	{
+		wasHeavyExAttackUsed = true;
+		superMeterAmount -= 0.50f;
+	}
+
+	if (superMeterAmount < 0.00f)
+	{
+		superMeterAmount = 0.00f;
+	}
 }
 
 void AGelotzCharacter::P2KeyboardAttack1()
@@ -276,20 +313,38 @@ void AGelotzCharacter::P2KeyboardMoveRight(float _value)
 	MoveRight(_value);
 }
 
-void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime)
+void AGelotzCharacter::CollidedWithProximityHitbox()
+{
+	if ((characterState == ECharacterState::VE_MovingLeft && !isFlipped) || (characterState == ECharacterState::VE_MovingRight && isFlipped))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Karakter Otomotasi Melakukan Blocking."));
+		characterState = ECharacterState::VE_Blocking;
+	}
+}
+
+void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime, float _blockstunTime, float _pushbackAmount, float _launchAmount)
 {
 	if (characterState != ECharacterState::VE_Blocking)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Menerima Damage Sebesar %f poin."), _damageAmount);
 		playerHealth -= _damageAmount;
+		superMeterAmount += _damageAmount * 0.85f;
 
-		characterState = ECharacterState::VE_Stunned;
 		stunTime = _hitstunTime;
-		BeginStun();
+		if (stunTime > 0.00f)
+		{
+			characterState = ECharacterState::VE_Stunned;
+			BeginStun();
+		}
 
 		if (otherPlayer)
 		{
 			otherPlayer->hasLandedHit = true;
+
+			if (!otherPlayer->wasLightExAttackUsed)
+			{
+				otherPlayer->superMeterAmount += _damageAmount * 0.30f;
+			}
 		}
 	}
 	else
@@ -297,13 +352,27 @@ void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime)
 		float reducedDamage = _damageAmount * 0.5f;
 		UE_LOG(LogTemp, Warning, TEXT("Menerima Damage Yang Dikurangi Sebesar %f poin"), reducedDamage);
 		playerHealth -= reducedDamage;
+
+		stunTime = _blockstunTime;
+
+		if (stunTime > 0.0f)
+		{
+			BeginStun();
+		}
+		else
+		{
+			characterState = ECharacterState::VE_Default;
+		}
 	}
 
 	if (playerHealth < 0.00f)
 	{
 		playerHealth = 0.00f;
 	}
-	
+	else if (playerHealth > 0.00f && playerHealth < 0.050f)
+	{
+		ChangeToDamageMaterial();
+	}
 }
 
 void AGelotzCharacter::BeginStun()

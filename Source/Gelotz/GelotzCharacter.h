@@ -16,7 +16,8 @@ enum class ECharacterState : uint8
 	VE_Jumping		UMETA(DisplayName =	"JUMPING"),
 	VE_Stunned		UMETA(DisplayName = "STUNNED"),
 	VE_Blocking		UMETA(DisplayName = "BLOCKING"),
-	VE_Crouching	UMETA(DisplayName = "CROUCHING")
+	VE_Crouching	UMETA(DisplayName = "CROUCHING"),
+	VE_Launched		UMETA(DisplayName = "LAUNCHED")
 };
 
 UCLASS(config=Game)
@@ -36,6 +37,7 @@ class AGelotzCharacter : public ACharacter
 	void StartAttack2();
 	void StartAttack3();
 	void StartAttack4();
+	void StartExceptionalAttack();
 
 	UFUNCTION(BlueprintCallable)
 		void P2KeyboardAttack1();
@@ -95,8 +97,18 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StopBlocking();
 
+	//Menentukan Apa Yang Harus Karakter Lakukan Jika bertabrakan dengan hitbox
 	UFUNCTION(BlueprintCallable)
-	void TakeDamage(float _damageAmount, float _hitstunTime);
+	void CollidedWithProximityHitbox();
+
+	UFUNCTION(BlueprintCallable)
+	void TakeDamage(float _damageAmount, float _hitstunTime, float _blockstunTime, float _pushbackAmount, float _launchAmount);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ChangeToDamageMaterial();
+
+	//Menentukan Karakter Terdorong Berapa Jauh
+	void PerformPushback(float _pushbackAmount, float _launchAmount, bool _hasBlocked);
 
 	//Fungsi Karakter Masuk Ke Animasi Stun
 	void BeginStun();
@@ -132,6 +144,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 		float stunTime;
 
+	//Nilai Gravitasi (Tergantung Berapa lama Karakter Di Udara)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+		float gravityScale;
+
+	//Jumlah Super Meter Karakter
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Super Meter")
+		float superMeterAmount;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
 		bool wasLightAttackUsed;
 
@@ -141,8 +161,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
 		bool wasHeavyAttackUsed;
 
+	// Apakah Player Menggunakan Jurus?
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
-		bool wasSpecialAttackUsed;
+		bool wasSuperUsed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
+		bool wasLightExAttackUsed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
+		bool wasMediumExAttackUsed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
+		bool wasHeavyExAttackUsed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Model")
 		bool isFlipped;
