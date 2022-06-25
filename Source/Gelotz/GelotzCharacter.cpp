@@ -322,6 +322,32 @@ void AGelotzCharacter::CollidedWithProximityHitbox()
 	}
 }
 
+void AGelotzCharacter::PerformPushback(float _pushbackAmount, bool _hasBlocked)
+{
+	if (_hasBlocked)
+	{
+		if (isFlipped)
+		{
+			LaunchCharacter(FVector(0.0f, -_pushbackAmount * -2.0f, 0.0f), false, false);
+		}
+		else
+		{
+			LaunchCharacter(FVector(0.0f, _pushbackAmount * -2.0f, 0.0f), false, false);
+		}
+	}
+	else
+	{
+		if (isFlipped)
+		{
+			LaunchCharacter(FVector(0.0f, -_pushbackAmount, 0.0f), false, false);
+		}
+		else
+		{
+			LaunchCharacter(FVector(0.0f, _pushbackAmount, 0.0f), false, false);
+		}
+	}
+}
+
 void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime, float _blockstunTime, float _pushbackAmount, float _launchAmount)
 {
 	if (characterState != ECharacterState::VE_Blocking)
@@ -340,12 +366,15 @@ void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime, float
 		if (otherPlayer)
 		{
 			otherPlayer->hasLandedHit = true;
+			otherPlayer->PerformPushback(_pushbackAmount, false);
 
 			if (!otherPlayer->wasLightExAttackUsed)
 			{
 				otherPlayer->superMeterAmount += _damageAmount * 0.30f;
 			}
 		}
+
+		PerformPushback(_pushbackAmount, false);
 	}
 	else
 	{
@@ -364,6 +393,14 @@ void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime, float
 			characterState = ECharacterState::VE_Default;
 		}
 	}
+
+	if (otherPlayer)
+	{
+		otherPlayer->hasLandedHit = false;
+		otherPlayer->PerformPushback(_pushbackAmount, false);
+	}
+
+	PerformPushback(_pushbackAmount, true);
 
 	if (playerHealth < 0.00f)
 	{

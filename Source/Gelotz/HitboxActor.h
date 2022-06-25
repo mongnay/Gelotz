@@ -41,6 +41,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 		float blockstunTime;
 
+	//Jumlah Jarak Karakter Terdorong
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
+		float pushbackDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 		EHitboxEnum hitboxType;

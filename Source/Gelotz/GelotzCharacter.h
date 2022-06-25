@@ -104,17 +104,17 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void TakeDamage(float _damageAmount, float _hitstunTime, float _blockstunTime, float _pushbackAmount, float _launchAmount);
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void ChangeToDamageMaterial();
-
 	//Menentukan Karakter Terdorong Berapa Jauh
-	void PerformPushback(float _pushbackAmount, float _launchAmount, bool _hasBlocked);
-
+	void PerformPushback(float _pushbackAmount, bool _hasBlocked);
+	
 	//Fungsi Karakter Masuk Ke Animasi Stun
 	void BeginStun();
 
 	//Fungsi Karakter Mengakhiri Animasi Stun
 	void EndStun();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ChangeToDamageMaterial();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player References")
 		AGelotzCharacter* otherPlayer;
