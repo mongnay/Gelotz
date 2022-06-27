@@ -150,9 +150,14 @@ void AGelotzCharacter::StopJumping()
 
 void AGelotzCharacter::Landed(const FHitResult& Hit)
 {
-	//ACharacter::Landed(Hit)
-	GetCharacterMovement()->GravityScale = gravityScale;
-	characterState = ECharacterState::VE_Default; //Ketikan Character Telah Menyentuh Permukaan Maka Character Akan Idle
+	if (characterState == ECharacterState::VE_Launched || characterState == ECharacterState::VE_Jumping)
+	{
+		//UE_Log(LogTemp, Warning, TEXT("Character Telah Mendarat"));
+		//ACharacter::Landed(Hit)
+		GetCharacterMovement()->GravityScale = gravityScale;
+		characterState = ECharacterState::VE_Default; //Ketikan Character Telah Menyentuh Permukaan Maka Character Akan Idle
+	}
+	
 }
 
 void AGelotzCharacter::StartCrouching()
@@ -322,7 +327,7 @@ void AGelotzCharacter::CollidedWithProximityHitbox()
 	}
 }
 
-void AGelotzCharacter::PerformPushback(float _pushbackAmount, bool _hasBlocked)
+void AGelotzCharacter::PerformPushback(float _pushbackAmount, float _launchAmount, bool _hasBlocked)
 {
 	if (_hasBlocked)
 	{
@@ -339,11 +344,20 @@ void AGelotzCharacter::PerformPushback(float _pushbackAmount, bool _hasBlocked)
 	{
 		if (isFlipped)
 		{
-			LaunchCharacter(FVector(0.0f, -_pushbackAmount, 0.0f), false, false);
+			if (_launchAmount > 0.0f) {
+				GetCharacterMovement()->GravityScale *= 0.7;
+				characterState = ECharacterState::VE_Launched;
+			}
+			LaunchCharacter(FVector(0.0f, -_pushbackAmount, _launchAmount), true, true);
 		}
 		else
+			if (_launchAmount > 0.0f)
+			{
+				GetCharacterMovement()->GravityScale *= 0.7;
+				characterState = ECharacterState::VE_Launched;
+			}
 		{
-			LaunchCharacter(FVector(0.0f, _pushbackAmount, 0.0f), false, false);
+			LaunchCharacter(FVector(0.0f, _pushbackAmount, _launchAmount), true, true);
 		}
 	}
 }
@@ -366,7 +380,7 @@ void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime, float
 		if (otherPlayer)
 		{
 			otherPlayer->hasLandedHit = true;
-			otherPlayer->PerformPushback(_pushbackAmount, false);
+			otherPlayer->PerformPushback(_pushbackAmount, 0.0f, false);
 
 			if (!otherPlayer->wasLightExAttackUsed)
 			{
@@ -374,7 +388,7 @@ void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime, float
 			}
 		}
 
-		PerformPushback(_pushbackAmount, false);
+		PerformPushback(_pushbackAmount, _launchAmount, false);
 	}
 	else
 	{
@@ -390,17 +404,20 @@ void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime, float
 		}
 		else
 		{
-			characterState = ECharacterState::VE_Default;
+			if (characterState != ECharacterState::VE_Launched)
+			{
+				characterState = ECharacterState::VE_Default;
+			}
 		}
 	}
 
 	if (otherPlayer)
 	{
 		otherPlayer->hasLandedHit = false;
-		otherPlayer->PerformPushback(_pushbackAmount, false);
+		otherPlayer->PerformPushback(_pushbackAmount, 0.0f, false);
 	}
 
-	PerformPushback(_pushbackAmount, true);
+	PerformPushback(_pushbackAmount, _launchAmount ,true);
 
 	if (playerHealth < 0.00f)
 	{
@@ -420,7 +437,10 @@ void AGelotzCharacter::BeginStun()
 
 void AGelotzCharacter::EndStun()
 {
-	characterState = ECharacterState::VE_Default;
+	if (characterState != ECharacterState::VE_Launched)
+	{
+		characterState = ECharacterState::VE_Default;
+	}
 	canMove = true;
 }
 

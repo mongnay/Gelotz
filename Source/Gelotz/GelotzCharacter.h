@@ -105,7 +105,7 @@ protected:
 	void TakeDamage(float _damageAmount, float _hitstunTime, float _blockstunTime, float _pushbackAmount, float _launchAmount);
 
 	//Menentukan Karakter Terdorong Berapa Jauh
-	void PerformPushback(float _pushbackAmount, bool _hasBlocked);
+	void PerformPushback(float _pushbackAmount, float _launchAmount, bool _hasBlocked);
 	
 	//Fungsi Karakter Masuk Ke Animasi Stun
 	void BeginStun();

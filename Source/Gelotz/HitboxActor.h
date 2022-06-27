@@ -45,6 +45,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 		float pushbackDistance;
 
+	//Jumlah Jarak Karakter Melayang
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
+		float launchDistance;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hitbox")
 		EHitboxEnum hitboxType;
 
