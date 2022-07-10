@@ -253,8 +253,11 @@ void AGelotzCharacter::StartAttack3()
 
 void AGelotzCharacter::StartAttack4()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Menggunakan Attack 4"));
-	wasSuperUsed = true;
+	if (superMeterAmount >= 0.0f)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Menggunakan Attack 4"));
+		wasSuperUsed = true;
+	}
 }
 
 void AGelotzCharacter::StartExceptionalAttack()
@@ -262,7 +265,7 @@ void AGelotzCharacter::StartExceptionalAttack()
 	if (wasLightAttackUsed)
 	{
 		wasLightExAttackUsed = true;
-		superMeterAmount -= 0.20f;
+		superMeterAmount -= 0.2f;
 	}
 
 	else if (wasMediumAttackUsed)

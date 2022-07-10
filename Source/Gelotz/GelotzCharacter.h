@@ -20,7 +20,7 @@ enum class ECharacterState : uint8
 	VE_Launched		UMETA(DisplayName = "LAUNCHED")
 };
 
-UCLASS(config=Game)
+UCLASS(config = Game)
 class AGelotzCharacter : public ACharacter
 {
 	GENERATED_BODY()
