@@ -7,7 +7,6 @@
 #include "GelotzCharacter.h"
 #include "GelotzGameMode.generated.h"
 
-
 UCLASS(minimalapi)
 class AGelotzGameMode : public AGameModeBase
 {
@@ -21,4 +20,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 		AGelotzCharacter* player2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameMode Settings")
+		float roundTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameMode Settings")
+		float numRounds;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameMode Settings")
+		bool isTimerActive;
 };

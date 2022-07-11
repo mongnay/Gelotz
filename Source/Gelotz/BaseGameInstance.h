@@ -21,4 +21,10 @@ class GELOTZ_API UBaseGameInstance : public UGameInstance
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player References")
 	ECharacterClass characterClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInstance Settings")
+		float roundTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInstance Settings")
+		int numRounds;
 };

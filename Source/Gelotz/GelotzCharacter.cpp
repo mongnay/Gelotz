@@ -55,6 +55,8 @@ AGelotzCharacter::AGelotzCharacter()
 	gravityScale = GetCharacterMovement()->GravityScale;
 	superMeterAmount = 0.0f;
 
+	roundsWon = 0;
+
 	wasLightAttackUsed = false;
 	wasMediumAttackUsed = false;
 	wasHeavyAttackUsed = false;
@@ -65,8 +67,10 @@ AGelotzCharacter::AGelotzCharacter()
 
 	isFlipped = false;
 	hasLandedHit = false;
-	canMove = true;
-	
+	canMove = false;
+
+	hasLostRound = false;
+	hasWonMatch = false;
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
@@ -253,7 +257,7 @@ void AGelotzCharacter::StartAttack3()
 
 void AGelotzCharacter::StartAttack4()
 {
-	if (superMeterAmount >= 0.0f)
+	if (superMeterAmount >= 1.0f)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Menggunakan Attack 4"));
 		wasSuperUsed = true;
@@ -373,6 +377,8 @@ void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime, float
 		playerHealth -= _damageAmount;
 		superMeterAmount += _damageAmount * 0.85f;
 
+		PlayDamageSoundEffect();
+
 		stunTime = _hitstunTime;
 		if (stunTime > 0.00f)
 		{
@@ -422,13 +428,15 @@ void AGelotzCharacter::TakeDamage(float _damageAmount, float _hitstunTime, float
 
 	PerformPushback(_pushbackAmount, _launchAmount ,true);
 
-	if (playerHealth < 0.00f)
+	if (otherPlayer->playerHealth < 0.0f)
 	{
-		playerHealth = 0.00f;
+		otherPlayer->playerHealth = 0.0f;
+		hasWonMatch = true;
 	}
-	else if (playerHealth > 0.00f && playerHealth < 0.050f)
+	else if (playerHealth < 0.00f)
 	{
-		ChangeToDamageMaterial();
+		playerHealth = 0.0f;
+		hasLostRound = true;
 	}
 }
 
@@ -445,6 +453,19 @@ void AGelotzCharacter::EndStun()
 		characterState = ECharacterState::VE_Default;
 	}
 	canMove = true;
+}
+
+void AGelotzCharacter::WinRound()
+{
+	otherPlayer->hasLostRound = true;
+	++roundsWon;
+	NotifyRoundEnd();
+}
+
+void AGelotzCharacter::WinMatch()
+{
+	canMove = false;
+	hasWonMatch = true;
 }
 
 void AGelotzCharacter::Tick(float DeltaTime)

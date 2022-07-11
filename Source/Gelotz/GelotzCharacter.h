@@ -114,7 +114,22 @@ protected:
 	void EndStun();
 
 	UFUNCTION(BlueprintImplementableEvent)
+		void PlayDamageSoundEffect();
+
+	UFUNCTION(BlueprintImplementableEvent)
 	void ChangeToDamageMaterial();
+
+	UFUNCTION(BlueprintCallable)
+		void WinRound();
+
+	UFUNCTION(BlueprintCallable)
+		void WinMatch();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+		void NotifyRoundStart();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void NotifyRoundEnd();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player References")
 		AGelotzCharacter* otherPlayer;
@@ -152,6 +167,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Super Meter")
 		float superMeterAmount;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Logic")
+		int roundsWon;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attacks")
 		bool wasLightAttackUsed;
 
@@ -185,6 +203,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Controller")
 		bool isDeviceForMultiplayer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+		bool hasLostRound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+		bool hasWonMatch;
 
 
 	// End of APawn interface
